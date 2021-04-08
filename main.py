@@ -77,8 +77,7 @@ def trail_length() -> None:
     summary_columns = args.summarycolumns.split(',')
     logging.info(f"Parsing KML file={args.kmlfile}, summary columns={summary_columns}")
     doc = kmlutilities.parse_file(args.kmlfile)
-    data = kmlutilities.get_kml_dataframe(doc, summary_columns)
-    kmlutilities.save_dataframe(args.reportfile, data)
+    kmlutilities.process_kml_data(doc, summary_columns, args.reportfile)
 
 
 def main() -> int:

@@ -31,8 +31,6 @@ class ShippoConnection(HttpConnectionBase):
 
         shippo.config.api_key = api_key
         self.__api_key = api_key
-        shipment_list: List[shippo.Shipment] = shippo.Shipment.all()
-        id = shipment_list[0]['object_id']
         self.__existing_shippo_order_ids: Set[str] = None
         self.__skip_shipping_classification = skip_shipping_classification
         self.__skip_order_status = skip_order_status
