@@ -29,7 +29,9 @@ def parse_arguments():
 
 
 def parse_config() -> Dict[str, Dict[str, Union[str, int]]]:
-    with open("config.json") as f:
+    dir_path: str = os.path.dirname(os.path.realpath(__file__))
+    config_file = os.path.join(dir_path, 'config.json')
+    with open(config_file) as f:
         config = json.load(f)
     return config
 
