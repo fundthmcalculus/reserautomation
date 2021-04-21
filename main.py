@@ -1,6 +1,7 @@
 import argparse
 import json
 import logging
+import sys
 from typing import Dict, Union, Callable, List
 
 from shippolink import ShippoConnection
@@ -80,7 +81,7 @@ def trail_length() -> None:
     kmlutilities.process_kml_data(doc, summary_columns, args.reportfile)
 
 
-def main() -> int:
+def main():
     logging.basicConfig(filename='lightspeedsync.log',
                         format='%(asctime)s:%(levelname)s:%(message)s',
                         datefmt='%Y-%m-%d %H:%M:%S',
@@ -93,10 +94,10 @@ def main() -> int:
         func()
         logging.debug('Finished')
 
-        return 0
+        sys.exit(0)
     except Exception as err:
         logging.exception('Fatal error in main:', exc_info=True)
-        return -1
+        sys.exit(-1)
 
 
 if __name__ == '__main__':
