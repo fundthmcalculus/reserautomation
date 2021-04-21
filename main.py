@@ -1,6 +1,7 @@
 import argparse
 import json
 import logging
+import os
 import sys
 from typing import Dict, Union, Callable, List
 
@@ -82,7 +83,9 @@ def trail_length() -> None:
 
 
 def main():
-    logging.basicConfig(filename='lightspeedsync.log',
+    dir_path: str = os.path.dirname(os.path.realpath(__file__))
+    log_file = os.path.join(dir_path, 'lightspeedsync.log')
+    logging.basicConfig(filename=log_file,
                         format='%(asctime)s:%(levelname)s:%(message)s',
                         datefmt='%Y-%m-%d %H:%M:%S',
                         filemode='w',
