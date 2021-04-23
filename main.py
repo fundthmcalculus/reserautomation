@@ -8,23 +8,18 @@ from typing import Dict, Union, Callable, List
 from shippolink import ShippoConnection
 from smartetailing.connection import SmartetailingConnection
 import lightspeedconnection
-import kmlutilities
 
 
 def create_function_map() -> Dict[str, Callable]:
     return {'syncshippo': sync_shippo,
             'downloadschedule': download_lightspeed_schedule,
-            'displayschedule': display_schedule_info,
-            'traillength': trail_length
+            'displayschedule': display_schedule_info
             }
 
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('command', help="Perform an action", choices=create_function_map().keys())
-    parser.add_argument('--kmlfile', help="Get the KML file")
-    parser.add_argument('--reportfile', help="Output csv file")
-    parser.add_argument('--summarycolumns', help="Summary columns for report, separated by commas `,`")
     return parser.parse_args()
 
 
@@ -64,7 +59,7 @@ def download_lightspeed_schedule() -> None:
                                                            config["client_id"],
                                                            config["client_secret"],
                                                            config["token_info"]["refresh_token"])
-    # TODO - Connect to lightspeed
+    # Connect to lightspeed
     connection.get_workorder_items()
     # TODO - Pull workorder data
     # TODO - Append to data table
@@ -74,14 +69,6 @@ def download_lightspeed_schedule() -> None:
 
 def display_schedule_info() -> None:
     raise NotImplementedError
-
-
-def trail_length() -> None:
-    args = parse_arguments()
-    summary_columns = args.summarycolumns.split(',')
-    logging.info(f"Parsing KML file={args.kmlfile}, summary columns={summary_columns}")
-    doc = kmlutilities.parse_file(args.kmlfile)
-    kmlutilities.process_kml_data(doc, summary_columns, args.reportfile)
 
 
 def main():
