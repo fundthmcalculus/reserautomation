@@ -1,38 +1,48 @@
 {
+  "googlesheets": {
+    "export_file": "./lightspeed_export.csv"
+  },
   "lightspeed": {
-    "account_id": "[ACCOUNT ID]",
+    "account_id": "***SECRET***",
     "cache_file": "workorder.db",
-    "client_id": "[FROM LIGHTSPEED DEV ACCOUNT]",
-    "client_secret": "[FROM LIGHTSPEED DEV ACCOUNT]",
-    "password": "[PASSWORD]",
-    "userid": "[USERNAME]",
+    "client_id": "***SECRET***",
+    "client_secret": "***SECRET***",
+    "password": "***SECRET***",
     "token_info": {
-      "access_token": "[OAUTH CALLBACK]",
+      "access_token": "***SECRET***",
       "expires_in": 1800,
-      "token_type": "bearer",
-      "scope": "employee:all systemuserid:[XXXXXX]",
-      "refresh_token": "[OAUTH CALLBACK]"
-    }
+      "refresh_token": "***SECRET***",
+      "scope": "employee:all systemuserid:341123",
+      "token_type": "bearer"
+    },
+    "userid": "***SECRET***"
   },
   "return_address": {
+    "city": "Newport",
     "company": "Reser Bicycle",
-    "street_no": "",
+    "country": "US",
+    "email": "support@reserbicycle.com",
     "name": "Reser Bicycle",
+    "phone": "+1 859 261 6187",
+    "state": "KY",
     "street1": "648 Monmouth Street",
     "street2": "",
-    "city": "Newport",
-    "state": "KY",
-    "zip": "41071",
-    "country": "US",
-    "phone": "+1 859 261 6187",
-    "email": "support@reserbicycle.com"
+    "street_no": "",
+    "zip": "41071"
   },
   "shippo": {
-    "apikey": "[SHIPPO API KEY FROM WEBSITE]"
+    "apikey": "***SECRET***",
+    "skiporderstatus": [
+      "received",
+      "being processed"
+    ],
+    "skipshippingclassification": [
+      "classification"
+    ]
   },
   "smartetailing": {
-    "baseurl": "[]/feeds.cfc",
-    "merchant_id": 0,
-    "url_key": "[URL KEY]"
+    "baseurl": "***SECRET***",
+    "merchant_id": "***SECRET***",
+    "url_key": "***SECRET***"
   }
 }
