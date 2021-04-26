@@ -1,9 +1,12 @@
 import argparse
+import datetime
 import json
 import logging
 import os
 import sys
 from typing import Dict, Union, Callable, List
+
+import pandas
 
 from shippolink import ShippoConnection
 from smartetailing.connection import SmartetailingConnection
@@ -78,7 +81,39 @@ def inventory_spreadsheet() -> None:
     lightspeed_config: Dict = parse_config()["lightspeed"]
     google_config: Dict = parse_config()["googlesheets"]
 
-    raise NotImplementedError
+    connection = lightspeedconnection.LightspeedConnection(lightspeed_config["cache_file"],
+                                                           lightspeed_config['account_id'],
+                                                           lightspeed_config["client_id"],
+                                                           lightspeed_config["client_secret"],
+                                                           lightspeed_config["token_info"]["refresh_token"])
+    inventory_items = connection.get_inventory()
+
+    margin = lambda price, cost: (price - cost) / price if price > 0 else 0.0
+
+    report_items = [{'System ID': item['systemSku'],
+                     'UPC': item['upc'],
+                     'EAN': item['ean'],
+                     'Custom SKU': item['customSku'],
+                     'Manufact. SKU': item['manufacturerSku'],
+                     'Item': item['description'],
+                     'Remaining': int(item['ItemShops']['ItemShop'][0]['qoh']),  # TODO - Handle other shops?
+                     'Total Cost': float(item['defaultCost']),
+                     'Avg. Cost': float(item['avgCost']),  # TODO - Handle rewriting this with default if 0
+                     'Sale Price': float(item['Prices']['ItemPrice'][0]['amount']),  # TODO - Handle finding the MSRP
+                     'Margin': margin(float(item['Prices']['ItemPrice'][0]['amount']), float(item['defaultCost']))
+                     } for item in inventory_items if int(item['ItemShops']['ItemShop'][0]['qoh']) > 0]
+
+    # Reporting dataframe
+    df = pandas.DataFrame(report_items)
+    # Handle currency and percent columns.
+    df['Total Cost'] = df['Total Cost'].apply(lambda x: f'${x:.2f}')
+    df['Avg. Cost'] = df['Avg. Cost'].apply(lambda x: f'${x:.2f}')
+    df['Sale Price'] = df['Sale Price'].apply(lambda x: f'${x:.2f}')
+    df['Margin'] = df['Margin'].apply(lambda x: f'{x*100:4.2f}%')
+
+    dir_path: str = os.path.dirname(os.path.realpath(__file__))
+    csv_file = os.path.join(dir_path, google_config["export_file"])
+    df.to_csv(csv_file, index=False)
 
 
 def update_sample_config() -> None:
@@ -111,15 +146,19 @@ def main():
                         filemode='w',
                         level=logging.DEBUG)
     logging.debug(f'Started argv={sys.argv}  path={os.getcwd()}')
+    time_now = datetime.datetime.now()
     try:
         args = parse_arguments()
         func = create_function_map()[args.command]
         func()
-        logging.debug('Finished')
+        time_end = datetime.datetime.now()
+        logging.debug(f'Finished {(time_end-time_now).seconds} sec')
 
         sys.exit(0)
     except Exception as err:
         logging.exception('Fatal error in main:', exc_info=True)
+        time_end = datetime.datetime.now()
+        logging.debug(f'Finished {(time_end - time_now).seconds} sec')
         sys.exit(-1)
 
 

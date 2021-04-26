@@ -109,6 +109,11 @@ class LightspeedConnection(HttpConnectionBase):
         self.refresh_token = refresh_token
         self.lightspeed = lightspeed_api.Lightspeed(self.__lightspeed_config)
 
+    def get_inventory(self) -> List:
+        items = self.lightspeed.get('Item', {'load_relations': '["ItemShops"]',
+                                             'ItemShops.qoh': '>,0'})['Item']
+        return items
+
     def get_workorder_items(self):
         # 1 week ago
         week_ago = datetime.now() - timedelta(days=21)
