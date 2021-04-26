@@ -4,8 +4,10 @@ import json
 import logging
 import os
 import sys
+import urllib.parse
 from typing import Dict, Union, Callable, List
 
+import boto3
 import pandas
 
 from shippolink import ShippoConnection
@@ -79,7 +81,7 @@ def display_schedule_info() -> None:
 def inventory_spreadsheet() -> None:
     logging.info("Updating inventory spreadsheet from lightspeed")
     lightspeed_config: Dict = parse_config()["lightspeed"]
-    google_config: Dict = parse_config()["googlesheets"]
+    aws_config: Dict = parse_config()["aws"]
 
     connection = lightspeedconnection.LightspeedConnection(lightspeed_config["cache_file"],
                                                            lightspeed_config['account_id'],
@@ -91,7 +93,7 @@ def inventory_spreadsheet() -> None:
     margin = lambda price, cost: (price - cost) / price if price > 0 else 0.0
 
     report_items = [{'System ID': item['systemSku'],
-                     'UPC': item['upc'],
+                     'UPC': int(item['upc'] or "0"),
                      'EAN': item['ean'],
                      'Custom SKU': item['customSku'],
                      'Manufact. SKU': item['manufacturerSku'],
@@ -106,14 +108,25 @@ def inventory_spreadsheet() -> None:
     # Reporting dataframe
     df = pandas.DataFrame(report_items)
     # Handle currency and percent columns.
+    df['UPC'] = df['UPC'].apply(lambda x: f'{x:014.0f}')
     df['Total Cost'] = df['Total Cost'].apply(lambda x: f'${x:.2f}')
     df['Avg. Cost'] = df['Avg. Cost'].apply(lambda x: f'${x:.2f}')
     df['Sale Price'] = df['Sale Price'].apply(lambda x: f'${x:.2f}')
     df['Margin'] = df['Margin'].apply(lambda x: f'{x*100:4.2f}%')
 
     dir_path: str = os.path.dirname(os.path.realpath(__file__))
-    csv_file = os.path.join(dir_path, google_config["export_file"])
+    csv_file = os.path.join(dir_path, aws_config["export_file"])
     df.to_csv(csv_file, index=False)
+
+    # Upload to s3
+    client = boto3.client(
+        's3',
+        aws_access_key_id=aws_config['access_key_id'],
+        aws_secret_access_key=aws_config['access_key_secret']
+    )
+    split_url = urllib.parse.urlsplit(aws_config['s3_file_uri'])
+    with open(aws_config['export_file'], "rb") as f:
+        client.upload_fileobj(f, f"{split_url.netloc}", f"{split_url.path[1:]}")
 
 
 def update_sample_config() -> None:
