@@ -25,9 +25,9 @@ class ShippoConnection(HttpConnectionBase):
 
     def __init__(self, api_key: str, skip_shipping_classification=None, skip_order_status=None):
         if skip_shipping_classification is None:
-            skip_shipping_classifications = ["In-Store Pickup"]
+            skip_shipping_classification = ["In-Store Pickup"]
         if skip_order_status is None:
-            skip_order_statuses = ['received', 'being processed']
+            skip_order_status = ['received', 'being processed']
 
         shippo.config.api_key = api_key
         self.__api_key = api_key
@@ -173,7 +173,7 @@ def create_line_item(item: objects.Item) -> dict:
         "title": f"{item.description}",
         "sku": item.mpn,
         "quantity": item.quantity,
-        "total_price": format_dollar(item.quantity * item.unit_price),
+        "total_price": format_dollar(item.unit_price),
         "currency": ShippoConstants.US_DOLLAR,
         "weight": f"{item.weight:.2f}",
         "weight_unit": ShippoConstants.POUND,
