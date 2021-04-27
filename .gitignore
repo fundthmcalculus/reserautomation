@@ -7,3 +7,4 @@ __pycache__/
 *.db
 .idea/
 config.json
+lightspeed_export.csv
