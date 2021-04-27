@@ -125,7 +125,7 @@ def inventory_spreadsheet() -> None:
         aws_secret_access_key=aws_config['access_key_secret']
     )
     split_url = urllib.parse.urlsplit(aws_config['s3_file_uri'])
-    with open(aws_config['export_file'], "rb") as f:
+    with open(csv_file, "rb") as f:
         client.upload_fileobj(f, f"{split_url.netloc}", f"{split_url.path[1:]}")
 
 
