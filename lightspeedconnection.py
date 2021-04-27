@@ -1,6 +1,5 @@
 import logging
 from datetime import datetime, timedelta, timezone
-from functools import cached_property
 from typing import Dict, List, Tuple, Callable, Any
 
 import dateutil.parser
@@ -109,6 +108,9 @@ class LightspeedConnection(HttpConnectionBase):
         self.refresh_token = refresh_token
         self.lightspeed = lightspeed_api.Lightspeed(self.__lightspeed_config)
 
+        self.__workorder_statuses = None
+        self.__employees = None
+
     def get_inventory(self) -> List:
         items = self.lightspeed.get('Item', {'load_relations': '["ItemShops"]',
                                              'ItemShops.qoh': '>,0'})['Item']
@@ -139,19 +141,23 @@ class LightspeedConnection(HttpConnectionBase):
     def __get_status(self, workorder) -> str:
         return self.workorder_statuses[int(workorder['workorderStatusID'])]
 
-    @cached_property
+    @property
     def workorder_statuses(self) -> Dict[int, str]:
-        statuses = self.lightspeed.get('WorkorderStatus')['WorkorderStatus']
-        # status_objects = [WorkorderStatus(**status) for status in statuses]
-        return dict([(int(status['workorderStatusID']), status['name']) for status in statuses])
+        if not self.__workorder_statuses:
+            statuses = self.lightspeed.get('WorkorderStatus')['WorkorderStatus']
+            # status_objects = [WorkorderStatus(**status) for status in statuses]
+            self.__workorder_statuses = dict([(int(status['workorderStatusID']), status['name']) for status in statuses])
+        return self.__workorder_statuses
 
-    @cached_property
+    @property
     def employees(self) -> Dict[int, str]:
-        employees = self.lightspeed.get('Employee')['Employee']
-        return dict([(int(employee['employeeID']), f'{employee["firstName"]} {employee["lastName"]}')
-                     for employee in employees])
+        if not self.__employees:
+            employees = self.lightspeed.get('Employee')['Employee']
+            self.__employees = dict([(int(employee['employeeID']), f'{employee["firstName"]} {employee["lastName"]}')
+                                     for employee in employees])
+        return self.__employees
 
-    @cached_property
+    @property
     def __lightspeed_config(self):
         return {
             'account_id': self.account_id,
