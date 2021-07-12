@@ -45,15 +45,17 @@ def sync_shippo() -> None:
     api_key: str = shippo_config["apikey"]
 
     shippo_connection = ShippoConnection(api_key,
-                                         shippo_config['skipshippingclassification'],
-                                         shippo_config['skiporderstatus'])
-    smartetailing_connection = SmartetailingConnection(etailing_config["baseurl"],
+                                         shippo_config['skipshippingclassification'])
+    smartetailing_connection = SmartetailingConnection(etailing_config["base_url"],
                                                        etailing_config["merchant_id"],
-                                                       etailing_config["url_key"])
+                                                       etailing_config["url_key"],
+                                                       etailing_config["web_url"],
+                                                       etailing_config["username"],
+                                                       etailing_config["password"])
 
     sent_orders = shippo_connection.send_to_shippo(config["return_address"], smartetailing_connection.export_orders())
     # Assuming we made it this far, everything worked, update the smart-etailing orders to not download again.
-    smartetailing_connection.confirm_order_receipts(sent_orders)
+    # smartetailing_connection.confirm_order_receipts(sent_orders)
 
 
 def download_lightspeed_schedule() -> None:

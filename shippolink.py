@@ -23,17 +23,15 @@ class ShippoOrderStatus:
 class ShippoConnection(HttpConnectionBase):
     SHIPPO_BASE_URL = "https://api.goshippo.com/orders/"
 
-    def __init__(self, api_key: str, skip_shipping_classification=None, skip_order_status=None):
+    def __init__(self, api_key: str, skip_shipping_classification=None):
         if skip_shipping_classification is None:
-            skip_shipping_classification = ["In-Store Pickup"]
-        if skip_order_status is None:
-            skip_order_status = ['received', 'being processed']
+            skip_shipping_classification = ["in-store pickup", "store pickup"]
 
         shippo.config.api_key = api_key
         self.__api_key = api_key
         self.__existing_shippo_order_ids: Set[str] = None
         self.__skip_shipping_classification = skip_shipping_classification
-        self.__skip_order_status = skip_order_status
+        self.__ship_order_statuses = ["ready for packing"]
 
     @property
     def existing_shippo_order_ids(self) -> Set[str]:
@@ -41,14 +39,16 @@ class ShippoConnection(HttpConnectionBase):
             self.__existing_shippo_order_ids = self.__get_existing_shippo_order_ids()
         return self.__existing_shippo_order_ids
 
-    def send_to_shippo(self, return_address: Dict[str, str], orders: Iterator[objects.Order]) -> Iterator[str]:
+    def send_to_shippo(self, return_address: Dict[str, str], orders: Iterator[objects.Order]) -> List[str]:
         shippo_orders: Iterator[objects.Order] = self.skip_existing_orders(
             self.use_only_received_orders(
                 self.skip_in_store_pickup(orders)))
+        created_orders = []
         for order in shippo_orders:
             order_json = create_shippo_order(return_address, order)
             self.__create_order(order_json)
-            yield order.id
+            created_orders.append(order.id)
+        return created_orders
 
     def skip_existing_orders(self, orders: Iterator[objects.Order]) -> Iterator[objects.Order]:
         for order in orders:
@@ -59,14 +59,14 @@ class ShippoConnection(HttpConnectionBase):
 
     def skip_in_store_pickup(self, orders: Iterator[objects.Order]) -> Iterator[objects.Order]:
         for order in orders:
-            if order.shipping.classification in self.__skip_shipping_classification:
+            if order.shipping.classification.lower() in self.__skip_shipping_classification:
                 logging.info(f"SKIPPED: Order #{order.id} shipping={order.shipping.classification}")
             else:
                 yield order
 
     def use_only_received_orders(self, orders: Iterator[objects.Order]) -> Iterator[objects.Order]:
         for order in orders:
-            if order.status.lower() in self.__skip_order_status:
+            if order.status.lower() in self.__ship_order_statuses:
                 yield order
             else:
                 logging.info(f"SKIPPED: Order #{order.id} in status={order.status}")
