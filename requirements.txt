@@ -1,8 +1,9 @@
-setuptools==56.0.0
-lxml~=4.6.2
-requests==2.25.1
+setuptools
+lxml
+requests
 shippo~=2.0.2
-smartetailing~=0.3.0
+smartetailing
+lightspeed_api
 Flask~=1.1.2
 boto3~=1.17.57
 pandas~=1.2.3
