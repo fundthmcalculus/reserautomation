@@ -20,6 +20,7 @@ def create_function_map() -> Dict[str, Callable]:
             'downloadschedule': download_lightspeed_schedule,
             'displayschedule': display_schedule_info,
             'inventoryspreadsheet': inventory_spreadsheet,
+            'getaccesstoken': get_access_token,
             'democonfigupdate': update_sample_config
             }
 
@@ -80,6 +81,19 @@ def display_schedule_info() -> None:
     raise NotImplementedError
 
 
+def get_access_token() -> None:
+    logging.info("Getting access token from lightspeed")
+    lightspeed_config: Dict = parse_config()["lightspeed"]
+    aws_config: Dict = parse_config()["aws"]
+
+    connection = lightspeedconnection.LightspeedConnection(lightspeed_config["cache_file"],
+                                                           lightspeed_config['account_id'],
+                                                           lightspeed_config["client_id"],
+                                                           lightspeed_config["client_secret"],
+                                                           lightspeed_config["token_info"]["refresh_token"])
+    connection.get_access_token()
+
+
 def inventory_spreadsheet() -> None:
     logging.info("Updating inventory spreadsheet from lightspeed")
     lightspeed_config: Dict = parse_config()["lightspeed"]
@@ -120,13 +134,23 @@ def inventory_spreadsheet() -> None:
     csv_file = os.path.join(dir_path, aws_config["export_file"])
     df.to_csv(csv_file, index=False)
 
+    # Secondary feed is solely MPN and quantity
+    mpn_qty_df = df[['Manufact. SKU', 'Remaining']]
+    mpn_csv_file = os.path.join(dir_path, aws_config["mpn_export_file"])
+    mpn_qty_df.to_csv(mpn_csv_file, index=False)
+
     # Upload to s3
     client = boto3.client(
         's3',
         aws_access_key_id=aws_config['access_key_id'],
         aws_secret_access_key=aws_config['access_key_secret']
     )
-    split_url = urllib.parse.urlsplit(aws_config['s3_file_uri'])
+    upload_csv_file(client, csv_file, aws_config['s3_file_uri'])
+    upload_csv_file(client, csv_file, aws_config['s3_mpn_file_uri'])
+
+
+def upload_csv_file(client, csv_file, aws_file):
+    split_url = urllib.parse.urlsplit(aws_file)
     with open(csv_file, "rb") as f:
         client.upload_fileobj(f, f"{split_url.netloc}", f"{split_url.path[1:]}")
 

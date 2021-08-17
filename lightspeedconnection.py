@@ -1,4 +1,5 @@
 import logging
+import webbrowser
 from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Tuple, Callable, Any
 
@@ -110,6 +111,14 @@ class LightspeedConnection(HttpConnectionBase):
 
         self.__workorder_statuses = None
         self.__employees = None
+
+    def get_access_token(self):
+        print("Opening web link")
+        webbrowser.open_new_tab(f"https://cloud.lightspeedapp.com/oauth/authorize.php?response_type=code&client_id={self.client_id}&scope=employee:all")
+        temporary_token = input("Temporary token:")
+        refresh_token = self.lightspeed.get_authorization_token(temporary_token)
+        print(f"Refresh Token:\n{refresh_token}")
+
 
     def get_inventory(self) -> List:
         items = self.lightspeed.get('Item', {'load_relations': '["ItemShops"]',
