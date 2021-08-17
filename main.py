@@ -136,6 +136,7 @@ def inventory_spreadsheet() -> None:
 
     # Secondary feed is solely MPN and quantity
     mpn_qty_df = df[['Manufact. SKU', 'Remaining']]
+    mpn_qty_df = mpn_qty_df[mpn_qty_df['Manufact. SKU'] is not None]
     mpn_csv_file = os.path.join(dir_path, aws_config["mpn_export_file"])
     mpn_qty_df.to_csv(mpn_csv_file, index=False)
 
