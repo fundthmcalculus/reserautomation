@@ -9,6 +9,8 @@ from typing import Dict, Union, Callable, List
 
 import boto3
 import pandas
+import sentry_sdk
+from sentry_sdk.integrations.logging import LoggingIntegration
 
 from shippolink import ShippoConnection
 from smartetailing.connection import SmartetailingConnection
@@ -170,7 +172,7 @@ def update_sample_config() -> None:
         all_keys = secret_to_clean.split('/')
         for key in all_keys[:-1]:
             my_config = my_config[key]
-        my_config[all_keys[-1]] = '***SECRET***'
+        my_config[all_keys[-1]] = "***SECRET***"
 
     config_file = "sample_config.json"
     with open(config_file, 'w') as f:
@@ -178,28 +180,51 @@ def update_sample_config() -> None:
 
 
 def main():
+    """
+    Main entry point for the application
+    """
+    initialize_logging()
+    time_now = datetime.datetime.now()
+    exit_code = 0
+    try:
+        args = parse_arguments()
+        func = create_function_map()[args.command]
+        func()
+    except Exception as err:
+        logging.exception('Fatal error in main')
+        exit_code = -1
+    finally:
+        time_end = datetime.datetime.now()
+        logging.debug(f'Finished {(time_end - time_now).seconds} sec')
+        sys.exit(exit_code)
+
+
+def initialize_logging():
     dir_path: str = os.path.dirname(os.path.realpath(__file__))
-    log_file = os.path.join(dir_path, 'lightspeedsync.log')
+    config = parse_config()
+
+    log_file = os.path.join(dir_path, config["logging"]["log_file"])
     logging.basicConfig(filename=log_file,
                         format='%(asctime)s:%(levelname)s:%(message)s',
                         datefmt='%Y-%m-%d %H:%M:%S',
                         filemode='w',
                         level=logging.DEBUG)
     logging.debug(f'Started argv={sys.argv}  path={os.getcwd()}')
-    time_now = datetime.datetime.now()
-    try:
-        args = parse_arguments()
-        func = create_function_map()[args.command]
-        func()
-        time_end = datetime.datetime.now()
-        logging.debug(f'Finished {(time_end-time_now).seconds} sec')
 
-        sys.exit(0)
-    except Exception as err:
-        logging.exception('Fatal error in main:', exc_info=True)
-        time_end = datetime.datetime.now()
-        logging.debug(f'Finished {(time_end - time_now).seconds} sec')
-        sys.exit(-1)
+    sentry_logging = LoggingIntegration(
+        level=logging.INFO,
+        event_level=logging.ERROR
+    )
+
+    sentry_sdk.init(
+        config["logging"]["sentry_url"],
+        integrations=[sentry_logging],
+        # Set traces_sample_rate to 1.0 to capture 100%
+        # of transactions for performance monitoring.
+        # We recommend adjusting this value in production.
+        traces_sample_rate=1.0
+    )
+    sentry_sdk.debug.configure_logger()
 
 
 if __name__ == '__main__':
