@@ -23,19 +23,21 @@ class ShippoOrderStatus:
 class ShippoConnection(HttpConnectionBase):
     SHIPPO_BASE_URL = "https://api.goshippo.com/orders/"
 
-    def __init__(self, api_key: str, skip_shipping_classification=None):
+    def __init__(self, api_key: str, skip_shipping_classification=None, include_order_status=None):
         if skip_shipping_classification is None:
             skip_shipping_classification = ["in-store pickup", "store pickup"]
+        if include_order_status is None:
+            include_order_status = ["recieved", "processing"]
 
         shippo.config.api_key = api_key
         self.__api_key = api_key
-        self.__existing_shippo_order_ids: Set[str] = None
+        self.__existing_shippo_order_ids: Set[str] = set()
         self.__skip_shipping_classification = skip_shipping_classification
-        self.__ship_order_statuses = ["ready for packing"]
+        self.__include_order_status = include_order_status
 
     @property
     def existing_shippo_order_ids(self) -> Set[str]:
-        if self.__existing_shippo_order_ids is None:
+        if not self.__existing_shippo_order_ids or len(self.__existing_shippo_order_ids) == 0:
             self.__existing_shippo_order_ids = self.__get_existing_shippo_order_ids()
         return self.__existing_shippo_order_ids
 
@@ -66,7 +68,7 @@ class ShippoConnection(HttpConnectionBase):
 
     def use_only_received_orders(self, orders: Iterator[objects.Order]) -> Iterator[objects.Order]:
         for order in orders:
-            if order.status.lower() in self.__ship_order_statuses:
+            if order.status.lower() in self.__include_order_status:
                 yield order
             else:
                 logging.info(f"SKIPPED: Order #{order.id} in status={order.status}")

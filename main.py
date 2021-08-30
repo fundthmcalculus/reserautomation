@@ -75,8 +75,7 @@ def sync_shippo() -> None:
     shippo_config: Dict[str, Union[str, int, List[str]]] = config["shippo"]
     api_key: str = shippo_config["apikey"]
 
-    shippo_connection = ShippoConnection(api_key,
-                                         shippo_config['skipshippingclassification'])
+    shippo_connection = ShippoConnection(api_key, include_order_status=shippo_config['include_order_status'])
     smartetailing_connection = SmartetailingConnection(etailing_config["base_url"],
                                                        etailing_config["merchant_id"],
                                                        etailing_config["url_key"],
