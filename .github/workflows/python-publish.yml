@@ -22,4 +22,4 @@ jobs:
     - name: Sync shippo
       run: |
         echo "${{ secrets.CONFIG }}" > "config.json"
-        python -m main.py syncshippo
+        python main.py syncshippo
