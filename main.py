@@ -5,7 +5,7 @@ import logging
 import os
 import sys
 import urllib.parse
-from typing import Dict, Union, Callable, List
+from typing import Dict, Union, Callable, List, Any
 
 import boto3
 import pandas
@@ -35,10 +35,38 @@ def parse_arguments():
 
 def parse_config() -> Dict[str, Dict[str, Union[str, int]]]:
     dir_path: str = os.path.dirname(os.path.realpath(__file__))
-    config_file = os.path.join(dir_path, 'config.json')
-    with open(config_file) as f:
-        config = json.load(f)
+    try:
+        config_file = os.path.join(dir_path, 'config.json')
+        with open(config_file) as f:
+            config: dict = json.load(f)
+    except IOError:
+        config = json.loads(os.environ["CONFIG"])
+    # Insert all the secrets from env vars
+    config = insert_config_secrets(config)
     return config
+
+
+def insert_config_secrets(config: Dict[str, Any]) -> Dict[str, Any]:
+    for key, value in config.items():
+        if value == "SECRET":
+            # Find the corresponding environment variable
+            pass
+        elif value is dict:
+            config[key] = insert_config_secrets(value)
+    return config
+
+
+def get_secret(name: str) -> str:
+    """
+    Get the secrets from the environment variables, then a backing file?
+    :param name: secret name
+    :return: secret value
+    """
+    try:
+        return os.environ[name]
+    except KeyError:
+        # TODO - get from secrets.json file?
+        raise
 
 
 def sync_shippo() -> None:
