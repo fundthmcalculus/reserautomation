@@ -3,7 +3,7 @@ name: Sync Shippo
 on:
   pull_request:
   schedule:
-    - cron: '9/20 * * * *' # Every 20th minute from 9 through 59 of every hour
+#    - cron: '9/20 * * * *' # Every 20th minute from 9 through 59 of every hour
 
 jobs:
   sync_shippo:
