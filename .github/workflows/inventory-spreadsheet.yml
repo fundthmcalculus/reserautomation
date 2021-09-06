@@ -1,0 +1,26 @@
+name: Google Shopping
+
+on:
+  pull_request:
+  schedule:
+    - cron: '17 4 * * *' # 17th minute of 4th hour, every day - aka 04:17
+
+jobs:
+  google_shopping_sheet:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+      - name: Post google sheet
+        run: |
+          python main.py inventoryspreadsheet
+        env:
+          CONFIG: ${{ secrets.CONFIG }}

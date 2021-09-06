@@ -8,3 +8,4 @@ __pycache__/
 .idea/
 config.json
 lightspeed_export.csv
+lightspeed_mpn_export.csv
