@@ -231,11 +231,13 @@ def initialize_logging():
     config = parse_config()
 
     log_file = os.path.join(dir_path, config["logging"]["log_file"])
-    logging.basicConfig(filename=log_file,
-                        format='%(asctime)s:%(levelname)s:%(message)s',
+    logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s',
                         datefmt='%Y-%m-%d %H:%M:%S',
-                        filemode='w',
-                        level=logging.DEBUG)
+                        level=logging.INFO,
+                        handlers=[
+                            logging.FileHandler('lightspeedsync.log', mode='w'),
+                            logging.StreamHandler(sys.stdout)
+                        ])
     logging.debug(f'Started argv={sys.argv}  path={os.getcwd()}')
 
     sentry_logging = LoggingIntegration(
