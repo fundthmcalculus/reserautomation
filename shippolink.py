@@ -1,7 +1,7 @@
 import logging
 import shippo
 from datetime import datetime
-from typing import List, Dict, Union, Set, Iterator
+from typing import List, Dict, Union, Set, Iterator, Tuple
 
 import requests
 from smartetailing import objects
@@ -42,9 +42,9 @@ class ShippoConnection(HttpConnectionBase):
         return self.__existing_shippo_order_ids
 
     def send_to_shippo(self, return_address: Dict[str, str], orders: Iterator[objects.Order]) -> List[str]:
-        shippo_orders: Iterator[objects.Order] = self.skip_existing_orders(
+        shippo_orders: Iterator[objects.Order] = list(self.skip_existing_orders(
             self.use_only_received_orders(
-                self.skip_in_store_pickup(orders)))
+                self.skip_in_store_pickup(orders))))
         created_orders = []
         for order in shippo_orders:
             order_json = create_shippo_order(return_address, order)
@@ -73,17 +73,26 @@ class ShippoConnection(HttpConnectionBase):
             else:
                 logging.info(f"SKIPPED: Order #{order.id} in status={order.status}")
 
-    def __get_existing_shippo_order_ids(self) -> Set[str]:
+    def __get_existing_shippo_order_ids_paged(self, page=1, page_size=50) -> Tuple[Set[str],bool]:
         response = requests.get(ShippoConnection.SHIPPO_BASE_URL, headers={
             "Authorization": f"ShippoToken {self.__api_key}",
-        })
+        }, params={'results': str(page_size), 'page': str(page)})
         self._handle_response(response)
         response_json = response.json()
-        if response_json["next"] is not None or response_json["previous"] is not None:
-            # TODO - Handle next and previous
-            raise NotImplementedError("Unhandled JSON pagination")
-        else:
-            return set([obj["order_number"] for obj in response_json["results"]])
+        order_numbers = set([obj["order_number"] for obj in response_json["results"]])
+        return order_numbers, len(order_numbers) == page_size
+
+    def __get_existing_shippo_order_ids(self) -> Set[str]:
+        order_number_set = set()
+        # Shippo doesn't currently report the paging correctly, so just request until we get an empty list back.
+        page = 1
+        has_next_page = True
+        while has_next_page:
+            page_set, has_next_page = self.__get_existing_shippo_order_ids_paged(page)
+            order_number_set = order_number_set.union(page_set)
+            page += 1
+
+        return order_number_set
 
     def __create_order(self, order_json: dict) -> None:
         response = requests.post(ShippoConnection.SHIPPO_BASE_URL, headers={
