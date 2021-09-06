@@ -1,4 +1,4 @@
-name: Sync Shippo
+name: Google Shopping
 
 on:
   pull_request:
