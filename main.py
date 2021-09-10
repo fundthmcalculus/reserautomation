@@ -134,6 +134,7 @@ def inventory_spreadsheet() -> None:
                                                            lightspeed_config["client_secret"],
                                                            lightspeed_config["token_info"]["refresh_token"])
     inventory_items = connection.get_inventory()
+    logging.info("Sorting inventory data")
 
     margin = lambda price, cost: (price - cost) / price if price > 0 else 0.0
 
@@ -159,15 +160,21 @@ def inventory_spreadsheet() -> None:
     df['Sale Price'] = df['Sale Price'].apply(lambda x: f'${x:.2f}')
     df['Margin'] = df['Margin'].apply(lambda x: f'{x*100:4.2f}%')
 
+    logging.info("Writing data frame to export csv")
+
     dir_path: str = os.path.dirname(os.path.realpath(__file__))
     csv_file = os.path.join(dir_path, aws_config["export_file"])
     df.to_csv(csv_file, index=False)
+
+    logging.info("Writing MPN data to csv")
 
     # Secondary feed is solely MPN and quantity
     mpn_qty_df = df[['Manufact. SKU', 'Remaining']]
     mpn_qty_df = mpn_qty_df[mpn_qty_df['Manufact. SKU'] != '']
     mpn_csv_file = os.path.join(dir_path, aws_config["mpn_export_file"])
     mpn_qty_df.to_csv(mpn_csv_file, index=False)
+
+    logging.info("Uploading to S3")
 
     # Upload to s3
     client = boto3.client(
@@ -177,6 +184,8 @@ def inventory_spreadsheet() -> None:
     )
     upload_csv_file(client, csv_file, aws_config['s3_file_uri'])
     upload_csv_file(client, csv_file, aws_config['s3_mpn_file_uri'])
+
+    logging.info("Files uploaded")
 
 
 def upload_csv_file(client, csv_file, aws_file):
