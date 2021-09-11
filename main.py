@@ -160,6 +160,9 @@ def inventory_spreadsheet() -> None:
     df['Sale Price'] = df['Sale Price'].apply(lambda x: f'${x:.2f}')
     df['Margin'] = df['Margin'].apply(lambda x: f'{x*100:4.2f}%')
 
+    # Zero blank Manufacturing SKUs for datafeedwatch merge.
+    df[df['Manufact. SKU'] == ''] = '0'
+
     logging.info("Writing data frame to export csv")
 
     dir_path: str = os.path.dirname(os.path.realpath(__file__))
