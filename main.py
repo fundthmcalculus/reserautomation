@@ -161,7 +161,7 @@ def inventory_spreadsheet() -> None:
     df['Margin'] = df['Margin'].apply(lambda x: f'{x*100:4.2f}%')
 
     # Zero blank Manufacturing SKUs for datafeedwatch merge.
-    df[df['Manufact. SKU'] == ''] = '0'
+    df['Manufact. SKU'] = df['Manufact. SKU'].apply(lambda x: '0' if not x else x)
 
     logging.info("Writing data frame to export csv")
 
