@@ -14,10 +14,13 @@ class ReserConfig:
 
     @staticmethod
     def __load_config():
-        dir_path: str = os.path.dirname(os.path.realpath(__file__))
-        config_file = os.path.join(dir_path, 'config.json')
-        with open(config_file) as f:
-            config: dict = json.load(f)
+        try:
+            dir_path: str = os.path.dirname(os.path.realpath(__file__))
+            config_file = os.path.join(dir_path, 'config.json')
+            with open(config_file) as f:
+                config: dict = json.load(f)
+        except IOError:
+            config = json.loads(os.environ["CONFIG"])
         # Insert all the secrets from env vars
         return ReserConfig.__insert_config_secrets(config)
 
