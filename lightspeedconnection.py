@@ -8,6 +8,7 @@ import lightspeed_api
 import matplotlib.pyplot as plt
 import numpy as np
 
+from datafeed import get_sale_items
 from httpconnection import HttpConnectionBase
 
 
@@ -60,7 +61,7 @@ def plot_workorder_allocation(workorders, employees):
 
     employee_ids = list(employees.keys())
     y = np.arange(0, len(employee_ids), 1)
-    x = [(date_min+timedelta(days=ij)).date() for ij in range((date_max-date_min).days)]
+    x = [(date_min + timedelta(days=ij)).date() for ij in range((date_max - date_min).days)]
     z = np.zeros((len(y), len(x)))
     for row, employee_id in enumerate(workorders_by_employee.keys()):
         for workorder in workorders_by_employee[employee_id]:
@@ -114,11 +115,22 @@ class LightspeedConnection(HttpConnectionBase):
 
     def get_access_token(self):
         print("Opening web link")
-        webbrowser.open_new_tab(f"https://cloud.lightspeedapp.com/oauth/authorize.php?response_type=code&client_id={self.client_id}&scope=employee:all")
+        webbrowser.open_new_tab(
+            f"https://cloud.lightspeedapp.com/oauth/authorize.php?response_type=code&client_id={self.client_id}&scope=employee:all")
         temporary_token = input("Temporary token:")
         refresh_token = self.lightspeed.get_authorization_token(temporary_token)
         print(f"Refresh Token:\n{refresh_token}")
 
+    def get_sales(self, start_date: datetime = None) -> List[Dict]:
+        sales = self.lightspeed.get('Sale', {'load_relations': '["SaleLines.Item"]',
+                                             'completeTime': f'>,{start_date.isoformat()}'})['Sale']
+        return sales
+
+    def get_recent_sales(self, num_days: int = 30) -> List[Dict]:
+        logging.info(f"Updating last {num_days} days sale data from lightspeed")
+        start_date = datetime.now() - timedelta(days=num_days)
+        recent_sales = self.get_sales(start_date)
+        return get_sale_items(recent_sales)
 
     def get_inventory(self) -> List:
         items = self.lightspeed.get('Item', {'load_relations': '["ItemShops"]',
@@ -155,7 +167,8 @@ class LightspeedConnection(HttpConnectionBase):
         if not self.__workorder_statuses:
             statuses = self.lightspeed.get('WorkorderStatus')['WorkorderStatus']
             # status_objects = [WorkorderStatus(**status) for status in statuses]
-            self.__workorder_statuses = dict([(int(status['workorderStatusID']), status['name']) for status in statuses])
+            self.__workorder_statuses = dict(
+                [(int(status['workorderStatusID']), status['name']) for status in statuses])
         return self.__workorder_statuses
 
     @property
