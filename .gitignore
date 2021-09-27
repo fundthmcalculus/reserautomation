@@ -9,3 +9,5 @@ __pycache__/
 config.json
 lightspeed_export.csv
 lightspeed_mpn_export.csv
+lightspeed_export_recent_sales.csv
+lightspeed_mpn_export_recent_sales.csv
