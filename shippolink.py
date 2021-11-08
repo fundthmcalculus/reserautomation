@@ -161,7 +161,8 @@ def create_parcel(weight: float = 0, length: int = 1, width: int = 1, height: in
 def override_weight(line_items, weight):
     if weight == 0:
         if len(line_items) == 0:
-            raise ValueError("Define weight or line items!")
+            logging.warn("Define weight or line items!")
+            return 1
         weight = sum([float(x["weight"]) for x in line_items])
     return weight
 
