@@ -28,7 +28,7 @@ class ReserConfig:
     def __insert_config_secrets(config: Dict[str, Any]) -> Dict[str, Any]:
         for key, value in config.items():
             if value == "SECRET":
-                # TODO - Find the corresponding environment variable
+                # Find the corresponding environment variable
                 config[key] = ReserConfig.__get_secret(key)
                 pass
             elif value is dict:

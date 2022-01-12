@@ -103,7 +103,7 @@ class ShippoConnection(HttpConnectionBase):
         logging.info(f"Created shippo order {order_json['order_number']}")
 
 
-def create_shippo_order(return_address: Dict[str, str], order: objects.Order):
+def create_shippo_order(return_address: Dict[str, str], order: objects.Order) -> Dict:
     # Get the shipment, load the addresses
     ship_to_address = create_address(order.ship_address)
     # Load the items list
