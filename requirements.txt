@@ -4,6 +4,7 @@ requests
 shippo~=2.0.2
 smartetailing
 lightspeed_api
+git+https://github.com/fuzzyrichie/lightspeed_api.git@master
 Flask~=1.1.2
 boto3~=1.17.57
 pandas~=1.2.3
