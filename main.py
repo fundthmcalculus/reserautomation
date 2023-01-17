@@ -5,6 +5,7 @@ import os
 import sys
 from typing import Dict, Union, Callable, List
 
+import requests
 import sentry_sdk
 from sentry_sdk.integrations.logging import LoggingIntegration
 
@@ -20,7 +21,8 @@ def create_function_map() -> Dict[str, Callable]:
             'downloadschedule': download_lightspeed_schedule,
             'displayschedule': display_schedule_info,
             'inventoryspreadsheet': inventory_spreadsheet,
-            'getaccesstoken': get_access_token
+            'getaccesstoken': get_access_token,
+            'downloadreviews': download_reviews
             }
 
 
@@ -28,6 +30,13 @@ def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('command', help="Perform an action", choices=create_function_map().keys())
     return parser.parse_args()
+
+
+def download_reviews() -> None:
+    config = ReserConfig.get_config()
+    review_url = "https://display.powerreviews.com/m/2568/l/en_US/product/0_0_387915/reviews?apikey=51e5c335-f79d-43e9-9c41-f3095d711fdb&_noconfig=true"
+    response = requests.get(review_url)
+    print(response.content)
 
 
 def sync_shippo() -> None:
