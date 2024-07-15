@@ -1,4 +1,4 @@
-setuptools==66.0.0
+setuptools==70.0.0
 lxml
 requests
 shippo==2.1.2
